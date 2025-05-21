@@ -43,6 +43,12 @@ public class Main extends SimpleApplication {
         modelo.rotate(0, FastMath.PI, 0);
         modelo.setLocalTranslation(0, 0, 0);
         rootNode.attachChild(modelo);
+        
+        // Mejorar normales para correcta iluminación
+        generarNormales(modelo);
+
+        // Reemplazar material por Lighting.j3md
+        reemplazarMateriales(modelo);
 
         // Configurar iluminación
         configurarIluminacion();
@@ -53,7 +59,7 @@ public class Main extends SimpleApplication {
         viewPort.addProcessor(dlsr);
 
         // Configurar la cámara
-        cam.setLocation(new Vector3f(0, 1.5f, 5));
+        cam.setLocation(new Vector3f(0, 1.5f, -5));
         cam.lookAt(Vector3f.ZERO, Vector3f.UNIT_Y);
     }
 
@@ -107,7 +113,7 @@ public class Main extends SimpleApplication {
 
             // Aplicar material base negro suave para el gato
             mat.setBoolean("UseMaterialColors", true);
-            mat.setColor("Diffuse", new ColorRGBA(0.2f, 0.2f, 0.2f, 1f));  // Negro suave
+            mat.setColor("Diffuse", new ColorRGBA(0.95f, 0.94f, 0.9f, 1f));  // Blanco perla 
             mat.setColor("Specular", ColorRGBA.White);  // Brillo
             mat.setFloat("Shininess", 64f);            // Nivel de brillo (1-128)
 
