@@ -27,6 +27,7 @@ public class Main extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         MapaIzquierdo mapaIzquierdo = new MapaIzquierdo(assetManager);
+        MapaDerecho mapaDerecho = new MapaDerecho(assetManager);
         
         // Fondo gris claro
         viewPort.setBackgroundColor(new ColorRGBA(0.8f, 0.8f, 0.8f, 1f));
@@ -46,6 +47,7 @@ public class Main extends SimpleApplication {
         modelo.setLocalTranslation(0, 0, 0);
         rootNode.attachChild(modelo);
         rootNode.attachChild(mapaIzquierdo);
+        rootNode.attachChild(mapaDerecho);
         
         // Mejorar normales para correcta iluminación
         generarNormales(modelo);
