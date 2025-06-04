@@ -1,50 +1,25 @@
 package mygame;
 
-import com.jme3.anim.AnimComposer;
 import com.jme3.asset.AssetManager;
-import com.jme3.scene.Node;
-import com.jme3.scene.Spatial;
-import java.util.logging.Logger;
 
-public class MapaDerecho extends Node {
-    
-    private static final Logger logger = Logger.getLogger(MapaDerecho.class.getName());
+public class MapaDerecho extends MapaBase {
 
     public MapaDerecho(AssetManager assetManager) {
-        // Cargar el modelo completo del mapa
-        Spatial mapaCompleto = assetManager.loadModel("Models/MapaDerecho/Mapa_derecho.j3o");
-        mapaCompleto.setLocalScale(1.0f);
-        mapaCompleto.setLocalTranslation(0, 0, 0);
-        this.attachChild(mapaCompleto);
-
-        // Activar todas las animaciones en el modelo
-        activarTodasAnimaciones(mapaCompleto);
+        super(assetManager);
     }
 
-    private void activarTodasAnimaciones(Spatial spatial) {
-        // Buscar AnimComposer en el nodo actual
-        AnimComposer animComposer = spatial.getControl(AnimComposer.class);
-        if (animComposer != null) {
-            logger.info("Encontrado AnimComposer en: " + spatial.getName());
-            
-            // Listar todas las animaciones disponibles
-            for (String animName : animComposer.getAnimClipsNames()) {
-                logger.info(" - Animación disponible: " + animName);
-                try {
-                    // Activar cada animación (algunas pueden necesitar configuración especial)
-                    animComposer.setCurrentAction(animName);
-                    logger.info("   Activada animación: " + animName);
-                } catch (Exception e) {
-                    logger.warning("Error al activar animación " + animName + ": " + e.getMessage());
-                }
-            }
-        }
+    @Override
+    protected String getRutaModelo() {
+        return "Models/MapaDerecho/Mapa_derecho.j3o";
+    }
 
-        // Buscar recursivamente en los hijos
-        if (spatial instanceof Node) {
-            for (Spatial child : ((Node) spatial).getChildren()) {
-                activarTodasAnimaciones(child);
-            }
-        }
+    @Override
+    protected void inicializar() {
+        this.setLocalTranslation(10, 0, 0); // Moverlo a la derecha
+        this.setLocalScale(1.0f);
+
+        // Agregar enemigos o portales propios de este lado
+        // agregarEnemigos();
+        // agregarTrampasElectricas();
     }
 }
