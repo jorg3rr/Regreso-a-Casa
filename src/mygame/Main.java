@@ -1,6 +1,8 @@
 package mygame;
 
 import com.jme3.app.SimpleApplication;
+import com.jme3.audio.AudioData;
+import com.jme3.audio.AudioNode;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
@@ -26,6 +28,9 @@ public class Main extends SimpleApplication {
     private CuboInteractivo cubo1, cubo2, cubo3, cubo4, cubo5, cuboFijo1, cuboFijo2, cuboFijo3, cuboFijo4, cuboFijo5;
     private float tiempoInvulnerable = 0f;
     private final float duracionInvulnerabilidad = 1.5f;
+    private AudioNode sonidoVidaPerdida;
+    private AudioNode musicaFondo;
+
 
     // Variables Gameplay
     private int vidas = 7;
@@ -81,6 +86,9 @@ public class Main extends SimpleApplication {
 
         // Configurar controles
         configurarEntradas();
+        
+        cargarMusicaFondo();
+        cargarSonidos();
         
         // Crear cubos móviles
         cubo1 = crearCubo(new Vector3f(-4.2f, 1f, 3.4f), -1.6f, 3.4f, 2.7f, false, 'z', ColorRGBA.Red);
@@ -181,7 +189,7 @@ public class Main extends SimpleApplication {
                     gato.saltar();
                     return;
                 case "Reset":
-                    reiniciarPosicion();
+                    reiniciarAplicacion();
                     return;
             }
             
@@ -283,16 +291,50 @@ public class Main extends SimpleApplication {
         textoVidas.setText("Vidas: " + vidas);
         tiempoInvulnerable = duracionInvulnerabilidad;
         reiniciarPosicion();
-
+        
+        if (sonidoVidaPerdida != null) {
+            sonidoVidaPerdida.playInstance();
+        }
+        
         if (vidas <= 0) {
             textoEstadoJuego.setText("GAME OVER");
             textoEstadoJuego.setColor(ColorRGBA.Red);
             juegoTerminado = true;
         }
+        
+    }
+    
+    private void cargarSonidos() {
+        sonidoVidaPerdida = new AudioNode(assetManager, "Sounds/vida_perdida.ogg", AudioData.DataType.Buffer);
+        sonidoVidaPerdida.setPositional(false);
+        sonidoVidaPerdida.setLooping(false);
+        sonidoVidaPerdida.setVolume(2);
+        rootNode.attachChild(sonidoVidaPerdida);
+    }
+
+    private void cargarMusicaFondo() {
+        musicaFondo = new AudioNode(assetManager, "Sounds/musica_fondo.ogg", AudioData.DataType.Stream);
+        musicaFondo.setLooping(true);
+        musicaFondo.setPositional(false);
+        musicaFondo.setVolume(0.5f);
+        rootNode.attachChild(musicaFondo);
+        musicaFondo.play();
     }
 
     @Override
     public void simpleRender(RenderManager rm) {
         // Renderizado adicional si es necesario
     }
+    
+    private void reiniciarAplicacion() {
+        stop(); // Detiene la aplicación actual
+
+        // Crea una nueva instancia y arráncala
+        Main nuevaApp = new Main();
+        AppSettings settings = new AppSettings(true);
+        settings.setTitle("Regreso a Casa");
+        nuevaApp.setSettings(settings);
+        nuevaApp.start();
+    }
+
 }
