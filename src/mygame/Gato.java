@@ -1,50 +1,60 @@
 package mygame;
 
 import com.jme3.asset.AssetManager;
+import com.jme3.bullet.collision.shapes.CapsuleCollisionShape;
+import com.jme3.bullet.control.RigidBodyControl;
+import com.jme3.bullet.collision.shapes.CollisionShape;
+import com.jme3.bullet.util.CollisionShapeFactory;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
+import com.jme3.scene.*;
+import com.jme3.scene.shape.Box;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
-import com.jme3.scene.Node;
-import com.jme3.scene.Spatial;
 import com.jme3.util.TangentBinormalGenerator;
 
 public class Gato {
     private Spatial modelo;
-    private Vector3f posicion;
     private final Node rootNode;
     private final AssetManager assetManager;
+
     // Físicas de salto
     private boolean enSalto = false;
     private boolean saltoDobleDisponible = true;
     private float velocidadSalto = 0;
-    private final float FUERZA_SALTO = 10f;
+    private final float FUERZA_SALTO = 7f;
     private final float GRAVEDAD = 20f;
 
+    private RigidBodyControl cuerpoFisico;
 
     public Gato(AssetManager assetManager, Node rootNode, Vector3f posicionInicial) {
         this.assetManager = assetManager;
         this.rootNode = rootNode;
-        this.posicion = posicionInicial.clone();
-        crearModelo();
+        crearModelo(posicionInicial);
     }
 
-    private void crearModelo() {
+    private void crearModelo(Vector3f posicionInicial) {
         modelo = assetManager.loadModel("Models/cute-black-cat.obj");
         modelo.setLocalScale(1.2f);
 
         generarNormales(modelo);
         reemplazarMateriales(modelo);
 
-        modelo.setLocalTranslation(posicion);
+        modelo.setLocalTranslation(posicionInicial);
         rootNode.attachChild(modelo);
+
+        // Cambiar la forma de colisión por una cápsula
+        CapsuleCollisionShape colisionador = new CapsuleCollisionShape(0.5f, 1.0f, 1);
+        cuerpoFisico = new RigidBodyControl(colisionador, 1.0f);
+        cuerpoFisico.setAngularFactor(0); // Bloquea rotación
+        cuerpoFisico.setFriction(1.0f);   // Más fricción
+        modelo.addControl(cuerpoFisico);
     }
 
     private void generarNormales(Spatial spatial) {
         if (spatial instanceof Geometry) {
-            Geometry geom = (Geometry) spatial;
-            Mesh mesh = geom.getMesh();
+            Mesh mesh = ((Geometry) spatial).getMesh();
             TangentBinormalGenerator.generate(mesh, true);
         } else if (spatial instanceof Node) {
             for (Spatial child : ((Node) spatial).getChildren()) {
@@ -77,13 +87,13 @@ public class Gato {
     }
 
     public void setPosicion(Vector3f nuevaPos) {
-        this.posicion.set(nuevaPos);
-        modelo.setLocalTranslation(posicion);
+        modelo.setLocalTranslation(nuevaPos);
     }
 
-    public void mover(Vector3f delta) {
-        this.posicion.addLocal(delta);
-        modelo.setLocalTranslation(posicion);
+    public void mover(Vector3f direccion) {
+        Vector3f velActual = cuerpoFisico.getLinearVelocity();
+        Vector3f nuevaVelocidad = new Vector3f(direccion.x * 5f, velActual.y, direccion.z * 5f);
+        cuerpoFisico.setLinearVelocity(nuevaVelocidad);
     }
 
     public void setRotacion(float x, float y, float z) {
@@ -95,39 +105,45 @@ public class Gato {
     }
 
     public Vector3f getPosicion() {
-        return posicion;
+        return modelo.getLocalTranslation().clone();
     }
 
     public Spatial getModelo() {
         return modelo;
     }
-    
+
     public void actualizar(float tpf) {
         if (enSalto) {
             velocidadSalto -= GRAVEDAD * tpf;
-            posicion.y += velocidadSalto * tpf;
+            float nuevaY = modelo.getLocalTranslation().y + velocidadSalto * tpf;
 
-            if (posicion.y <= 1f) { // Suelo
-                posicion.y = 1f;
+            if (nuevaY <= 1f) {
+                nuevaY = 1f;
                 enSalto = false;
                 saltoDobleDisponible = true;
                 velocidadSalto = 0;
             }
 
-            modelo.setLocalTranslation(posicion);
+            Vector3f nuevaPos = modelo.getLocalTranslation().clone();
+            nuevaPos.y = nuevaY;
+            modelo.setLocalTranslation(nuevaPos);
         }
     }
-    
+
     public void saltar() {
+        Vector3f velocidadActual = cuerpoFisico.getLinearVelocity();
+
         if (!enSalto) {
-            velocidadSalto = FUERZA_SALTO;
+            cuerpoFisico.setLinearVelocity(new Vector3f(velocidadActual.x, FUERZA_SALTO, velocidadActual.z));
             enSalto = true;
         } else if (saltoDobleDisponible) {
-            velocidadSalto = FUERZA_SALTO * 0.75f;
+            cuerpoFisico.setLinearVelocity(new Vector3f(velocidadActual.x, FUERZA_SALTO * 0.75f, velocidadActual.z));
             saltoDobleDisponible = false;
         }
     }
 
-
-}   
-
+    public RigidBodyControl getCuerpoFisico() {
+        return cuerpoFisico;
+    }
+    
+}

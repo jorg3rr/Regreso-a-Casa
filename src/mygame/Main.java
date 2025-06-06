@@ -11,15 +11,21 @@ import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.scene.Node;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
+import com.jme3.app.SimpleApplication;
+import com.jme3.bullet.PhysicsSpace;
+import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.control.RigidBodyControl;
+import mygame.MapaDerecho;
+import mygame.MapaIzquierdo;
 
 public class Main extends SimpleApplication {
-
+    
+    private RigidBodyControl cuerpoFisico;
     private DirectionalLight luzPrincipal;
     private Gato gato;
-    
-    private Vector3f offsetCamara = new Vector3f(0, 4, 10);
-    private float suavizadoCamara = 5f;
-
+    private BulletAppState bulletAppState;
+    private float suavizadoCamara = 10f;
+    private Vector3f offsetCamara = new Vector3f(0, 10, 20);
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -28,6 +34,22 @@ public class Main extends SimpleApplication {
 
     @Override
     public void simpleInitApp() {
+        
+        // Inicializar sistema de físicas
+        bulletAppState = new BulletAppState();
+        stateManager.attach(bulletAppState);
+
+        // Cargar los dos mapas
+        MapaIzquierdo mapaIzq = new MapaIzquierdo(assetManager);
+        MapaDerecho mapaDer = new MapaDerecho(assetManager);
+
+        // Agregar sus cuerpos rígidos al espacio físico
+        bulletAppState.getPhysicsSpace().add(mapaIzq.getRigidBodyControl());
+        bulletAppState.getPhysicsSpace().add(mapaDer.getRigidBodyControl());
+
+        // Añadir al mundo visual
+        rootNode.attachChild(mapaIzq);
+        rootNode.attachChild(mapaDer);
         // Fondo gris claro
         viewPort.setBackgroundColor(new ColorRGBA(0.8f, 0.8f, 0.8f, 1f));
 
@@ -38,8 +60,10 @@ public class Main extends SimpleApplication {
         rootNode.attachChild(mapaDerecho);
 
         // Gato
-        Vector3f posicionInicial = new Vector3f(0, 1, 0);
+        Vector3f posicionInicial = new Vector3f(-2, 1, 0);
+        
         gato = new Gato(assetManager, rootNode, posicionInicial);
+        bulletAppState.getPhysicsSpace().add(gato.getCuerpoFisico());        
 
         // Iluminación y sombras
         configurarIluminacion();
@@ -49,12 +73,17 @@ public class Main extends SimpleApplication {
         viewPort.addProcessor(dlsr);
 
         // Cámara
-        cam.setLocation(new Vector3f(0, 4f, 10));
+        cam.setFrustumPerspective(60f, (float) cam.getWidth() / cam.getHeight(), 1f, 1000f);
+        cam.setLocation(new Vector3f(0, 10, 20));
         cam.lookAt(posicionInicial, Vector3f.UNIT_Y);
         flyCam.setMoveSpeed(10);
+        
 
         // Controles
         configurarEntradas();
+        
+        flyCam.setEnabled(false);  // usamos cámara personalizada
+        
     }
 
     private void configurarEntradas() {
@@ -136,6 +165,8 @@ public class Main extends SimpleApplication {
     public void simpleUpdate(float tpf) {
         gato.actualizar(tpf);
         actualizarCamara(tpf);
+        
+        System.out.println("Posición del gato: " + gato.getPosicion());
     }
 
     @Override
